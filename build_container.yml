@@ -1,0 +1,35 @@
+---
+- name: Process environment variables and load required configurations.
+  hosts: all
+  connection: local
+  gather_facts: false
+  roles:
+    - { role: prep-environment }
+    - { role: determine-ip-address, when: env=='dev'}
+
+- name: Create the autoscaling RabbitMQ images.
+  hosts:
+    - swarm_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: False
+  roles:
+    - { role: rabbitmq-image-sync, when: env!='master' }
+
+- name: Create Automation Framework Base Python Image
+  hosts:
+    - swarm_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: False
+  roles:
+    - { role: base-image-sync, when: env!='master'  }
+
+- name: Create ApiServer cluster images.
+  hosts:
+    - swarm_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: False
+  roles:
+    - { role: apiserver-image-sync, when: env!='master' }
